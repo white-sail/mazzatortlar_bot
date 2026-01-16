@@ -2,57 +2,164 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mazza Tortlar</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --tg-theme-bg-color: #fff; --tg-theme-text-color: #222; --tg-theme-button-color: #3390ec; }
-        body { font-family: sans-serif; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); margin: 0; padding: 15px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .card { border: 1px solid #eee; border-radius: 12px; padding: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .card img { width: 100%; border-radius: 8px; }
-        .btn { background: var(--tg-theme-button-color); color: white; border: none; width: 100%; padding: 8px; border-radius: 6px; margin-top: 10px; cursor: pointer; }
-        h2 { font-size: 1.2rem; }
+        :root {
+            --bg-color: var(--tg-theme-bg-color, #fff);
+            --text-color: var(--tg-theme-text-color, #222);
+            --hint-color: var(--tg-theme-hint-color, #999);
+            --button-color: var(--tg-theme-button-color, #3390ec);
+            --button-text: var(--tg-theme-button-text-color, #fff);
+            --secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f5);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0; padding: 0;
+            padding-bottom: 80px; /* Savatcha tugmasi uchun joy */
+        }
+
+        header {
+            padding: 15px;
+            background-color: var(--secondary-bg);
+            text-align: center;
+        }
+
+        .container { padding: 10px; }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .product-card {
+            background: var(--bg-color);
+            border: 1px solid var(--secondary-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .product-img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+        }
+
+        .product-info { padding: 10px; flex-grow: 1; }
+
+        .product-title { font-weight: bold; font-size: 14px; margin-bottom: 5px; }
+
+        .product-price { color: var(--button-color); font-weight: bold; font-size: 15px; }
+
+        .add-btn {
+            background-color: var(--button-color);
+            color: var(--button-text);
+            border: none;
+            border-radius: 8px;
+            padding: 8px;
+            width: 100%;
+            margin-top: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .cart-status {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--button-color);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            display: none; /* Savatchada narsa bo'lsa chiqadi */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-weight: bold;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
-    <h2>Bizning Tortlar 🍰</h2>
-    <div id="product-list" class="grid">
-        <p>Yuklanmoqda...</p>
-    </div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+<header>
+    <h2 style="margin:0">🍰 Mazza Tortlar</h2>
+    <p style="color: var(--hint-color); font-size: 12px; margin-top:5px">Eng shirin va sifatli tortlar</p>
+</header>
 
-        // Mahsulotlarni ekranga chiqarish funksiyasi
-        async function loadProducts() {
-            // Hozircha namuna uchun, keyinchalik bu ma'lumotlar botdan keladi
-            const products = [
-                { id: 1, name: "Shokoladli", price: "250,000", img: "https://picsum.photos/200" },
-                { id: 2, name: "Medovik", price: "180,000", img: "https://picsum.photos/201" }
-            ];
+<div class="container">
+    <div id="product-list" class="product-grid">
+        </div>
+</div>
 
-            const list = document.getElementById('product-list');
-            list.innerHTML = ''; // "Yuklanmoqda"ni o'chirish
+<div id="cart-btn" class="cart-status" onclick="sendToBot()">
+    Savatchani ko'rish (<span id="cart-count">0</span>)
+</div>
 
-            products.forEach(p => {
-                list.innerHTML += `
-                    <div class="card">
-                        <img src="${p.img}" alt="${p.name}">
-                        <h3>${p.name}</h3>
-                        <p>${p.price} so'm</p>
-                        <button class="btn" onclick="order('${p.name}', ${p.id})">Qo'shish</button>
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand(); // Ilovani to'liq ekranga yoyish
+
+    let cart = [];
+
+    // Hozircha namuna uchun, keyingi qadamda bu bazadan keladi
+    const mockProducts = [
+        { id: 1, name: "Shokoladli Fantaziya", price: 250000, img: "https://picsum.photos/400/300?1" },
+        { id: 2, name: "Asalli Medovik", price: 180000, img: "https://picsum.photos/400/300?2" },
+        { id: 3, name: "Muzqaymoqli Tort", price: 210000, img: "https://picsum.photos/400/300?3" },
+        { id: 4, name: "Red Velvet", price: 230000, img: "https://picsum.photos/400/300?4" }
+    ];
+
+    function renderProducts() {
+        const list = document.getElementById('product-list');
+        list.innerHTML = '';
+        mockProducts.forEach(p => {
+            list.innerHTML += `
+                <div class="product-card">
+                    <img src="${p.img}" class="product-img">
+                    <div class="product-info">
+                        <div class="product-title">${p.name}</div>
+                        <div class="product-price">${p.price.toLocaleString()} so'm</div>
+                        <button class="add-btn" onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Qo'shish</button>
                     </div>
-                `;
-            });
-        }
+                </div>
+            `;
+        });
+    }
 
-        function order(name, id) {
-            tg.sendData(JSON.stringify({ product_id: id, name: name }));
-        }
+    function addToCart(id, name, price) {
+        cart.push({ id, name, price });
+        updateCart();
+        tg.HapticFeedback.impactOccurred('medium'); // Titrash effekti
+    }
 
-        loadProducts();
-    </script>
+    function updateCart() {
+        const btn = document.getElementById('cart-btn');
+        const count = document.getElementById('cart-count');
+        if (cart.length > 0) {
+            btn.style.display = 'block';
+            count.innerText = cart.length;
+        }
+    }
+
+    function sendToBot() {
+        const total = cart.reduce((sum, item) => sum + item.price, 0);
+        const data = {
+            items: cart,
+            total_price: total
+        };
+        tg.sendData(JSON.stringify(data)); // Ma'lumotni Botga yuborish
+    }
+
+    renderProducts();
+</script>
+
 </body>
 </html>
