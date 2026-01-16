@@ -8,158 +8,109 @@
     <style>
         :root {
             --bg-color: var(--tg-theme-bg-color, #fff);
-            --text-color: var(--tg-theme-text-color, #222);
-            --hint-color: var(--tg-theme-hint-color, #999);
-            --button-color: var(--tg-theme-button-color, #3390ec);
-            --button-text: var(--tg-theme-button-text-color, #fff);
             --secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f5);
+            --button-color: var(--tg-theme-button-color, #3390ec);
+            --text-color: var(--tg-theme-text-color, #222);
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0; padding: 0;
-            padding-bottom: 80px; /* Savatcha tugmasi uchun joy */
-        }
-
-        header {
-            padding: 15px;
-            background-color: var(--secondary-bg);
+        body { font-family: sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; }
+        header { padding: 15px; background: var(--secondary-bg); text-align: center; }
+        
+        /* Kategoriya dizayni */
+        .category-list { padding: 15px; display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .category-card {
+            background: var(--secondary-bg);
+            padding: 20px;
+            border-radius: 12px;
             text-align: center;
-        }
-
-        .container { padding: 10px; }
-
-        .product-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .product-card {
-            background: var(--bg-color);
-            border: 1px solid var(--secondary-bg);
-            border-radius: 15px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .product-img {
-            width: 100%;
-            height: 140px;
-            object-fit: cover;
-        }
-
-        .product-info { padding: 10px; flex-grow: 1; }
-
-        .product-title { font-weight: bold; font-size: 14px; margin-bottom: 5px; }
-
-        .product-price { color: var(--button-color); font-weight: bold; font-size: 15px; }
-
-        .add-btn {
-            background-color: var(--button-color);
-            color: var(--button-text);
-            border: none;
-            border-radius: 8px;
-            padding: 8px;
-            width: 100%;
-            margin-top: 8px;
+            font-weight: bold;
+            font-size: 18px;
             cursor: pointer;
-            font-weight: bold;
+            border: 1px solid #ddd;
         }
 
-        .cart-status {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--button-color);
-            color: white;
-            padding: 12px 25px;
-            border-radius: 30px;
-            display: none; /* Savatchada narsa bo'lsa chiqadi */
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            font-weight: bold;
-            z-index: 1000;
-        }
+        /* Mahsulotlar dizayni */
+        .product-grid { display: none; padding: 15px; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .back-btn { margin: 10px; padding: 5px 15px; background: #eee; border: none; border-radius: 5px; cursor: pointer; }
+        
+        .hidden { display: none; }
+        .active-grid { display: grid; }
     </style>
 </head>
 <body>
 
-<header>
-    <h2 style="margin:0">🍰 Mazza Tortlar</h2>
-    <p style="color: var(--hint-color); font-size: 12px; margin-top:5px">Eng shirin va sifatli tortlar</p>
+<header id="main-header">
+    <h2 style="margin:0">Kategoriyalar 🍰</h2>
 </header>
 
-<div class="container">
+<div id="category-view" class="category-list">
+    <div class="category-card" onclick="showProducts(1, 'Tortlar')">🎂 Tortlar</div>
+    <div class="category-card" onclick="showProducts(2, 'Ichimliklar')">🥤 Salqin Ichimliklar</div>
+    <div class="category-card" onclick="showProducts(3, 'Shirinliklar')">🍩 Shirinliklar</div>
+</div>
+
+<div id="product-view" class="hidden">
+    <button class="back-btn" onclick="showCategories()">⬅️ Orqaga</button>
     <div id="product-list" class="product-grid">
         </div>
 </div>
 
-<div id="cart-btn" class="cart-status" onclick="sendToBot()">
-    Savatchani ko'rish (<span id="cart-count">0</span>)
-</div>
-
 <script>
     const tg = window.Telegram.WebApp;
-    tg.expand(); // Ilovani to'liq ekranga yoyish
+    tg.expand();
 
-    let cart = [];
-
-    // Hozircha namuna uchun, keyingi qadamda bu bazadan keladi
-    const mockProducts = [
-        { id: 1, name: "Shokoladli Fantaziya", price: 250000, img: "https://picsum.photos/400/300?1" },
-        { id: 2, name: "Asalli Medovik", price: 180000, img: "https://picsum.photos/400/300?2" },
-        { id: 3, name: "Muzqaymoqli Tort", price: 210000, img: "https://picsum.photos/400/300?3" },
-        { id: 4, name: "Red Velvet", price: 230000, img: "https://picsum.photos/400/300?4" }
+    // Namuna mahsulotlar bazasi
+    const allProducts = [
+        { id: 1, cat_id: 1, name: "Shokoladli Tort", price: 250000 },
+        { id: 2, cat_id: 1, name: "Medovik", price: 180000 },
+        { id: 3, cat_id: 2, name: "Coca-Cola 1.5L", price: 15000 },
+        { id: 4, cat_id: 3, name: "Pahlava", price: 45000 }
     ];
 
-    function renderProducts() {
+    function showProducts(categoryId, categoryName) {
+        document.getElementById('category-view').classList.add('hidden');
+        document.getElementById('product-view').classList.remove('hidden');
+        document.getElementById('product-list').classList.add('active-grid');
+        document.getElementById('main-header').innerHTML = `<h2 style="margin:0">${categoryName}</h2>`;
+
         const list = document.getElementById('product-list');
         list.innerHTML = '';
-        mockProducts.forEach(p => {
+
+        const filtered = allProducts.filter(p => p.cat_id === categoryId);
+        filtered.forEach(p => {
             list.innerHTML += `
-                <div class="product-card">
-                    <img src="${p.img}" class="product-img">
-                    <div class="product-info">
-                        <div class="product-title">${p.name}</div>
-                        <div class="product-price">${p.price.toLocaleString()} so'm</div>
-                        <button class="add-btn" onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Qo'shish</button>
-                    </div>
+                <div style="border:1px solid #eee; padding:10px; border-radius:10px; text-align:center;">
+                    <h4>${p.name}</h4>
+                    <p>${p.price.toLocaleString()} so'm</p>
+                    <button style="background:var(--button-color); color:white; border:none; padding:5px 10px; border-radius:5px;">Qo'shish</button>
                 </div>
             `;
         });
     }
 
-    function addToCart(id, name, price) {
-        cart.push({ id, name, price });
-        updateCart();
-        tg.HapticFeedback.impactOccurred('medium'); // Titrash effekti
+    function showCategories() {
+        document.getElementById('category-view').classList.remove('hidden');
+        document.getElementById('product-view').classList.add('hidden');
+        document.getElementById('product-list').classList.remove('active-grid');
+        document.getElementById('main-header').innerHTML = `<h2 style="margin:0">Kategoriyalar 🍰</h2>`;
+    }
+// Savatchadagi ma'lumotlarni Telegram Botga yuborish
+function sendOrderToBot() {
+    const tg = window.Telegram.WebApp;
+
+    if (cart.length === 0) {
+        tg.showAlert("Savatchangiz bo'sh!");
+        return;
     }
 
-    function updateCart() {
-        const btn = document.getElementById('cart-btn');
-        const count = document.getElementById('cart-count');
-        if (cart.length > 0) {
-            btn.style.display = 'block';
-            count.innerText = cart.length;
-        }
-    }
+    const orderData = {
+        items: cart, // Savatchadagi mahsulotlar ro'yxati
+        total_price: cart.reduce((sum, item) => sum + item.price, 0),
+        order_date: new Date().toLocaleString()
+    };
 
-    function sendToBot() {
-        const total = cart.reduce((sum, item) => sum + item.price, 0);
-        const data = {
-            items: cart,
-            total_price: total
-        };
-        tg.sendData(JSON.stringify(data)); // Ma'lumotni Botga yuborish
-    }
-
-    renderProducts();
+    // MUHIM: Ma'lumotni botga yuborish (bu Mini App-ni yopadi)
+    tg.sendData(JSON.stringify(orderData));
+}
 </script>
-
 </body>
 </html>
