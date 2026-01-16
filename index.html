@@ -7,137 +7,129 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: var(--tg-theme-bg-color, #ffffff);
-            --sec-bg: var(--tg-theme-secondary-bg-color, #f0f0f2);
-            --text: var(--tg-theme-text-color, #222);
-            --hint: var(--tg-theme-hint-color, #999);
-            --accent: var(--tg-theme-button-color, #3390ec);
-            --btn-text: var(--tg-theme-button-text-color, #ffffff);
+            --tg-bg: var(--tg-theme-bg-color, #ffffff);
+            --tg-text: var(--tg-theme-text-color, #222222);
+            --tg-hint: var(--tg-theme-hint-color, #999999);
+            --tg-link: var(--tg-theme-link-color, #248b9f);
+            --tg-primary: var(--tg-theme-button-color, #3390ec);
+            --tg-secondary: var(--tg-theme-secondary-bg-color, #f4f4f5);
         }
 
-        body { font-family: -apple-system, system-ui; background: var(--bg-color); color: var(--text); margin: 0; padding: 0; user-select: none; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+               background: var(--tg-secondary); color: var(--tg-text); margin: 0; padding: 0; }
         
-        header { padding: 20px; text-align: center; background: var(--sec-bg); border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
+        .header { background: var(--tg-bg); padding: 20px; text-align: center; 
+                  border-radius: 0 0 25px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         
-        .container { padding: 15px; }
-
-        /* Toifalar dizayni */
-        .category-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-        .cat-card { 
-            background: var(--sec-bg); padding: 25px; border-radius: 15px; 
-            text-align: center; font-size: 20px; font-weight: bold; cursor: pointer;
-            transition: transform 0.2s; border: 1px solid rgba(0,0,0,0.05);
-        }
-        .cat-card:active { transform: scale(0.98); }
-
-        /* Mahsulotlar dizayni */
-        .product-grid { display: none; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .prod-card { 
-            background: var(--bg-color); border-radius: 15px; border: 1px solid var(--sec-bg);
-            overflow: hidden; display: flex; flex-direction: column;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-        }
-        .prod-info { padding: 10px; text-align: center; }
-        .price { color: var(--accent); font-weight: bold; margin: 8px 0; }
+        .categories, .products { padding: 15px; display: grid; gap: 12px; }
         
-        .add-btn { 
-            background: var(--accent); color: var(--btn-text); border: none; 
-            padding: 8px; border-radius: 10px; width: 100%; font-weight: bold;
-        }
+        .card { background: var(--tg-bg); border-radius: 18px; padding: 15px; 
+                display: flex; align-items: center; justify-content: space-between;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.03); transition: 0.2s; border: 1px solid rgba(0,0,0,0.05); }
+        .card:active { transform: scale(0.97); opacity: 0.8; }
 
-        .back-link { 
-            display: inline-block; color: var(--accent); margin-bottom: 15px; 
-            text-decoration: none; font-weight: 500; cursor: pointer;
-        }
+        .product-card { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+        .product-img { width: 100%; height: 150px; border-radius: 15px; object-fit: cover; margin-bottom: 10px; }
+        
+        .price-tag { color: var(--tg-primary); font-weight: 700; font-size: 1.1em; }
+        
+        .btn-add { background: var(--tg-primary); color: white; border: none; 
+                   padding: 8px 15px; border-radius: 12px; font-weight: 600; width: 100%; }
 
-        .hidden { display: none; }
+        .back-btn { background: none; border: none; color: var(--tg-link); font-size: 16px; 
+                    cursor: pointer; padding: 10px; margin-left: 10px; }
+        
+        .hidden { display: none !important; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px; }
     </style>
 </head>
 <body>
 
-<header id="header">
-    <h1 style="margin:0; font-size: 24px;">Mazza Tortlar 🍰</h1>
-    <p id="status-text" style="color: var(--hint); margin: 5px 0 0;">Kategoriyani tanlang</p>
-</header>
-
-<div class="container">
-    <div id="category-view" class="category-grid">
-        <div class="cat-card" onclick="showProducts(1, 'Tortlar')">🎂 Tortlar</div>
-        <div class="cat-card" onclick="showProducts(2, 'Ichimliklar')">🥤 Ichimliklar</div>
-        <div class="cat-card" onclick="showProducts(3, 'Shirinliklar')">🍩 Shirinliklar</div>
+<div id="category-page">
+    <div class="header">
+        <h1 style="margin:0; font-size: 22px;">Mazza Tortlar 🍰</h1>
+        <p style="color: var(--tg-hint); margin: 5px 0 0;">Kategoriyani tanlang</p>
     </div>
-
-    <div id="product-view" class="hidden">
-        <div class="back-link" onclick="showCategories()">← Toifalarga qaytish</div>
-        <div id="product-list" class="product-grid" style="display: grid;"></div>
+    <div class="categories">
+        <div class="card" onclick="showProducts(1, 'Tortlar')">
+            <span style="font-size: 18px; font-weight: 600;">🎂 Tortlar</span>
+            <span style="color: var(--tg-hint);">→</span>
+        </div>
+        <div class="card" onclick="showProducts(2, 'Ichimliklar')">
+            <span style="font-size: 18px; font-weight: 600;">🥤 Ichimliklar</span>
+            <span style="color: var(--tg-hint);">→</span>
+        </div>
     </div>
+</div>
+
+<div id="product-page" class="hidden">
+    <button class="back-btn" onclick="showCategories()">← Orqaga</button>
+    <div id="product-list" class="grid-2"></div>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
-    
-    // Telegram MainButton sozlamalari
-    tg.MainButton.setText("SAVATCHANI KO'RISH");
-    tg.MainButton.onClick(() => sendOrderToBot());
+    tg.MainButton.setParams({ text_color: '#ffffff', color: '#3390ec' });
 
     let cart = [];
+    
+    // Bazadagi jadvallarga moslangan namunalar
     const allProducts = [
-        { id: 1, cat_id: 1, name: "Shokoladli", price: 250000 },
-        { id: 2, cat_id: 1, name: "Medovik", price: 180000 },
-        { id: 3, cat_id: 2, name: "Cola 1.5L", price: 15000 },
-        { id: 4, cat_id: 3, name: "Pahlava", price: 45000 }
+        { id: 1, cat_id: 1, name: "Shokoladli Fantaziya", price: 250000, img: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400" },
+        { id: 2, cat_id: 1, name: "Asalli Medovik", price: 180000, img: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400" },
+        { id: 3, cat_id: 2, name: "Kofe Latte", price: 25000, img: "https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?w=400" }
     ];
 
-    function showProducts(catId, name) {
-        document.getElementById('category-view').classList.add('hidden');
-        document.getElementById('product-view').classList.remove('hidden');
-        document.getElementById('status-text').innerText = name;
-        
+    function showProducts(catId, catName) {
+        document.getElementById('category-page').classList.add('hidden');
+        document.getElementById('product-page').classList.remove('hidden');
         const list = document.getElementById('product-list');
         list.innerHTML = '';
-        
+
         allProducts.filter(p => p.cat_id === catId).forEach(p => {
             list.innerHTML += `
-                <div class="prod-card">
-                    <div style="height:100px; background:#eee;"></div> <div class="prod-info">
-                        <div style="font-weight:bold">${p.name}</div>
-                        <div class="price">${p.price.toLocaleString()} so'm</div>
-                        <button class="add-btn" onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Qo'shish</button>
-                    </div>
-                </div>
-            `;
+                <div class="card product-card">
+                    <img src="${p.img}" class="product-img">
+                    <span style="font-weight:600; font-size: 14px;">${p.name}</span>
+                    <span class="price-tag">${p.price.toLocaleString()} so'm</span>
+                    <button class="btn-add" onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Qo'shish</button>
+                </div>`;
         });
     }
 
     function showCategories() {
-        document.getElementById('category-view').classList.remove('hidden');
-        document.getElementById('product-view').classList.add('hidden');
-        document.getElementById('status-text').innerText = "Kategoriyani tanlang";
+        document.getElementById('product-page').classList.add('hidden');
+        document.getElementById('category-page').classList.remove('hidden');
     }
 
     function addToCart(id, name, price) {
         cart.push({ id, name, price });
-        tg.HapticFeedback.impactOccurred('light'); // Tebranish
-        
+        tg.HapticFeedback.impactOccurred('medium');
+        updateMainButton();
+    }
+
+    function updateMainButton() {
         if (cart.length > 0) {
+            const total = cart.reduce((s, i) => s + i.price, 0);
+            tg.MainButton.setText(`BUYURTMA BERISH (${total.toLocaleString()} so'm)`);
             tg.MainButton.show();
-            tg.MainButton.setText(`BUYURTMA BERISH (${cart.length})`);
+        } else {
+            tg.MainButton.hide();
         }
     }
 
-    function sendOrderToBot() {
-        if (cart.length === 0) return;
-        
-        const total = cart.reduce((sum, i) => sum + i.price, 0);
+    tg.onEvent('mainButtonClicked', function() {
         const data = {
-            order_items: cart,
-            total_amount: total
+            action: "new_order",
+            items: cart,
+            total: cart.reduce((s, i) => s + i.price, 0)
         };
-
-        // MA'LUMOTNI YUBORISH
+        // BU ENG MUHIM QISMI:
         tg.sendData(JSON.stringify(data));
-    }
+    });
+
 </script>
 </body>
 </html>
